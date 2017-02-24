@@ -66,6 +66,9 @@ public interface ConfigurationSettings {
 	 */
 	/** OpenShift settings here **/
 	static final String OPENSHIFT_ES_ACL_DELAY_IN_MILLIS = "io.fabric8.elasticsearch.acl.sync_delay_millis";
+	static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_APP = "io.fabric8.elasticsearch.kibana.mapping.app";
+	static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_OPERATIONS = "io.fabric8.elasticsearch.kibana.mapping.ops";
+	static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_EMPTY = "io.fabric8.elasticsearch.kibana.mapping.empty";
 	static final String OPENSHIFT_ES_USER_PROFILE_PREFIX = "io.fabric8.elasticsearch.acl.user_profile_prefix";
 	static final String OPENSHIFT_WHITELISTED_USERS = "io.fabric8.elasticsearch.authentication.users";
 	static final String OPENSHIFT_ROLES = "X-OpenShift-Roles";
@@ -103,9 +106,6 @@ public interface ConfigurationSettings {
 
 	static final boolean OPENSHIFT_DYNAMIC_ENABLED_DEFAULT = true;
 	static final boolean OPENSHIFT_KIBANA_REWRITE_ENABLED_DEFAULT = true;
-
-	static final String OPENSHIFT_CONFIG_USE_COMMON_DATA_MODEL = "openshift.config.use_common_data_model";
-	static final boolean OPENSHIFT_DEFAULT_USE_COMMON_DATA_MODEL = false;
 
 	static final String OPENSHIFT_CONFIG_PROJECT_INDEX_PREFIX = "openshift.config.project_index_prefix";
 	static final String OPENSHIFT_DEFAULT_PROJECT_INDEX_PREFIX = "";
