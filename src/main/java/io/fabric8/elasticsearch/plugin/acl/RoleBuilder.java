@@ -39,17 +39,18 @@ public class RoleBuilder {
         this.name = name;
     }
 
+    public RoleBuilder setClusterActions(String [] clusterActions) {
+        setClusters(Arrays.asList(clusterActions));
+        return this;
+    }   
+    
     public RoleBuilder setClusters(List<String> clusters) {
         if (clusters != null) {
             this.clusters = new HashSet<String>(clusters);
         }
         return this;
     }
-
-    public RoleBuilder setClusters(String[] clusters) {
-        return setClusters(Arrays.asList(clusters));
-    }
-
+    
     public RoleBuilder addIndex(String index) {
         indices.put(index, new HashMap<String, HashSet<String>>());
         return this;

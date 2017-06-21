@@ -79,6 +79,7 @@ public class DynamicACLFilter extends RestFilter implements ConfigurationSetting
 
     private final String kbnVersionHeader;
     private final String[] operationsProjects;
+    private final String[] clusterRoleActions;
 
     private Boolean enabled;
 
@@ -108,6 +109,7 @@ public class DynamicACLFilter extends RestFilter implements ConfigurationSetting
         LOGGER.debug("searchGuardIndex: {}", this.searchGuardIndex);
 
         this.enabled = settings.getAsBoolean(OPENSHIFT_DYNAMIC_ENABLED_FLAG, OPENSHIFT_DYNAMIC_ENABLED_DEFAULT);
+        this.clusterRoleActions = settings.getAsArray(OPENSHIFT_ES_PROJECT_CLUSTER_ROLE_ACTIONS, new String []{});
 
     }
 
@@ -282,7 +284,7 @@ public class DynamicACLFilter extends RestFilter implements ConfigurationSetting
             }
 
             LOGGER.debug("Syncing from cache to ACL...");
-            roles.syncFrom(cache, userProfilePrefix, cdmProjectPrefix);
+            roles.syncFrom(cache, userProfilePrefix, cdmProjectPrefix, clusterRoleActions);
             rolesMapping.syncFrom(cache, userProfilePrefix);
 
             writeAcl(roles, rolesMapping);

@@ -70,6 +70,11 @@ public interface ConfigurationSettings {
     static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_APP = "io.fabric8.elasticsearch.kibana.mapping.app";
     static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_OPERATIONS = "io.fabric8.elasticsearch.kibana.mapping.ops";
     static final String OPENSHIFT_ES_KIBANA_SEED_MAPPINGS_EMPTY = "io.fabric8.elasticsearch.kibana.mapping.empty";
+    
+    /**
+     * The cluster actions or action names given to the role that is generated for each project namespace 
+     */
+    static final String OPENSHIFT_ES_PROJECT_CLUSTER_ROLE_ACTIONS = "io.fabric8.elasticsearch.project.clusteractions";
     static final String OPENSHIFT_ES_USER_PROFILE_PREFIX = "io.fabric8.elasticsearch.acl.user_profile_prefix";
     static final String OPENSHIFT_ROLES = "X-OpenShift-Roles";
 

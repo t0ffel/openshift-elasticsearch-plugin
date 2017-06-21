@@ -21,6 +21,7 @@ import static io.fabric8.elasticsearch.plugin.KibanaUserReindexFilter.getUsernam
 import java.io.IOException;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -45,9 +46,7 @@ public class SearchGuardRoles implements Iterable<SearchGuardRoles.Roles>, Confi
     private static final String[] DEFAULT_ROLE_ACTIONS = { SG_ACTION_READ, "indices:admin/mappings/fields/get*",
         "indices:admin/validate/query*", "indices:admin/get*" };
     private static final String[] KIBANA_INDEX_ACTIONS = { SG_ACTION_ALL };
-    private static final String[] DEFAULT_CLUSTER_ACTIONS = { "cluster:monitor/nodes/info", "cluster:monitor/health" };
     private static final String DEFAULT_ROLE_TYPE = "*";
-    private static final String DEFAULT_ROLE_INDEX = "*";
 
     private static final String CLUSTER_HEADER = "cluster";
     private static final String INDICES_HEADER = "indices";
@@ -163,7 +162,7 @@ public class SearchGuardRoles implements Iterable<SearchGuardRoles.Roles>, Confi
         roles.remove(role);
     }
 
-    public void syncFrom(UserProjectCache cache, final String userProfilePrefix, final String cdmProjectPrefix) {
+    public void syncFrom(UserProjectCache cache, final String userProfilePrefix, final String cdmProjectPrefix, final String [] clusterActions) {
         removeSyncAcls();
 
         RolesBuilder builder = new RolesBuilder();
@@ -171,8 +170,9 @@ public class SearchGuardRoles implements Iterable<SearchGuardRoles.Roles>, Confi
         for (String project : cache.getAllProjects()) {
             String projectName = String.format("%s_%s", PROJECT_PREFIX, project.replace('.', '_'));
             String indexName = String.format("%s?*", project.replace('.', '?'));
-            RoleBuilder role = new RoleBuilder(projectName).setActions(indexName, DEFAULT_ROLE_TYPE,
-                    DEFAULT_ROLE_ACTIONS);
+            RoleBuilder role = new RoleBuilder(projectName)
+                    .setActions(indexName, DEFAULT_ROLE_TYPE, DEFAULT_ROLE_ACTIONS)
+                    .setClusters(Arrays.asList(clusterActions));
 
             // If using common data model, allow access to both the
             // $projname.$uuid.* indices and
