@@ -27,13 +27,15 @@ public class ProxyUsernameIntegrationTest extends ElasticsearchIntegrationTest {
         startES();
 
         //ops user
-        givenUserIsClusterAdmin("admin");
+        givenUserIsClusterAdmin("admin", "ADMINTOKEN");
+        givenTokenIsAuthorizedForUser("admin");
         givenUserIsAdminForProjects("logging", "openshift");
         whenGettingDocument("_cat/indices");
         assertThatResponseIsSuccessful();
 
         //non-ops user
-        givenUserIsNotClusterAdmin("somerandomuser");
+        givenUserIsNotClusterAdmin("somerandomuser", "AUSERTOKEN");
+        givenTokenIsAuthorizedForUser("somerandomuser");
         givenUserIsAdminForProjects("myproject");
         whenGettingDocument("_cat/indices");
         assertThatResponseIsForbidden();
@@ -44,7 +46,8 @@ public class ProxyUsernameIntegrationTest extends ElasticsearchIntegrationTest {
             "CN=Lastname\\\\, Firstname,OU=Users,OU=TDBFG,DC=d2-tdbfg,DC=com"
             };
         for (String username : users) {
-            givenUserIsNotClusterAdmin(username);
+            givenUserIsNotClusterAdmin(username, "AUSERTOKEN");
+            givenTokenIsAuthorizedForUser(username);
             givenUserIsAdminForProjects("myproject");
             whenCheckingIndexExists(".kibana." + KibanaUserReindexFilter.getUsernameHash(formatUserName(username)));
             assertThatResponseIsSuccessful();

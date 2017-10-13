@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -95,6 +96,7 @@ public class OpenshiftRequestContextFactoryTest {
     }
 
     private OpenshiftRequestContext whenCreatingUserContext() throws Exception {
+        doNothing().when(utils).assertUser(any(RestRequest.class));
         this.context = factory.create(request, cache);
         return this.context;
     }

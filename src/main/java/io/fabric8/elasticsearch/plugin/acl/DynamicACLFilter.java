@@ -103,13 +103,16 @@ public class DynamicACLFilter extends RestFilter implements ConfigurationSetting
 
         try {
             if (enabled) {
-                // grab the kibana version here out of "kbn-version" if we can
-                // -- otherwise use the config one
-                String kbnVersion = getKibanaVersion(request);
+                if (utils.isClientCertAuth(request)) {
+                    return; //sgssl filter already determined this is an auth'd connection
+                }
                 final OpenshiftRequestContext requestContext = contextFactory.create(request, cache);
                 request = utils.modifyRequest(request, requestContext);
                 request.putInContext(OPENSHIFT_REQUEST_CONTEXT, requestContext);
                 if (requestContext.isAuthenticated() && !cache.hasUser(requestContext.getUser(), requestContext.getToken())) {
+                    // grab the kibana version here out of "kbn-version" if we can
+                    // -- otherwise use the config one
+                    final String kbnVersion = getKibanaVersion(request);
                     if (updateCache(requestContext, kbnVersion)) {
                         kibanaSeed.setDashboards(requestContext, client, kbnVersion, cdmProjectPrefix);
                         syncAcl(requestContext);

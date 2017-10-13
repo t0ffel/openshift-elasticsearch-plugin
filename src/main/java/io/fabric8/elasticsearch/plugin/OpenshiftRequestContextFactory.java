@@ -89,6 +89,9 @@ public class OpenshiftRequestContextFactory  {
         }
 
         String token = utils.getBearerToken(request);
+        if (StringUtils.isNotBlank(user)){
+            utils.assertUser(request);
+        }
         if (StringUtils.isNotBlank(user) && StringUtils.isNotBlank(token)){
             isClusterAdmin = utils.isOperationsUser(request);
                 

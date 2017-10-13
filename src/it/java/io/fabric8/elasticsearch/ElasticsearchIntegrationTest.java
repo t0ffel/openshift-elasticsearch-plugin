@@ -30,7 +30,6 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,8 +66,6 @@ import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.node.info.NodeInfo;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoRequest;
 import org.elasticsearch.action.admin.cluster.node.info.NodesInfoResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.common.bytes.BytesReference;
@@ -94,9 +91,6 @@ import org.junit.runner.Description;
 import com.floragunn.searchguard.support.ConfigConstants;
 import com.google.common.base.Strings;
 
-import io.fabric8.elasticsearch.ElasticsearchIntegrationTest.HttpResponse;
-import io.fabric8.elasticsearch.ElasticsearchIntegrationTest.RequestRunner;
-import io.fabric8.elasticsearch.ElasticsearchIntegrationTest.RequestRunnerBuilder;
 import io.fabric8.elasticsearch.plugin.ConfigurationSettings;
 import io.fabric8.elasticsearch.plugin.OpenShiftElasticSearchPlugin;
 import io.fabric8.elasticsearch.util.RequestUtils;
@@ -113,6 +107,7 @@ public abstract class ElasticsearchIntegrationTest {
     private static final String USERNAME = "username";
     private static final String RESPONSE = "response";
     private static final String URI = "uri";
+    private static final String TOKEN = "token";
     
     @Rule
     public TestName name = new TestName();
@@ -304,16 +299,29 @@ public abstract class ElasticsearchIntegrationTest {
             .get();
     }
     
-    protected void givenUserIsClusterAdmin(String user) {
-        expSubjectAcccessReviewToBe(Boolean.TRUE, user);
+    protected void givenUserIsClusterAdmin(String user, String token) {
+        expSubjectAcccessReviewToBe(Boolean.TRUE, user, token);
     }
 
-    protected void givenUserIsNotClusterAdmin(String user) {
-        expSubjectAcccessReviewToBe(Boolean.FALSE, user);
+    protected void givenUserIsNotClusterAdmin(String user, String token) {
+        expSubjectAcccessReviewToBe(Boolean.FALSE, user, token);
     }
     
-    private void expSubjectAcccessReviewToBe(boolean value, String user) {
+    protected void givenTokenIsAuthorizedForUser(String username) {
+        if(username.contains("\\")){
+            username = username.replace("\\", "\\\\");
+        }
+        String response = "{\"metadata\":{\"name\":\"" + username + "\"}}";
+        apiServer.expect().get().withPath("/oapi/v1/users/~").andReturn(200,response).once();
+    }
+
+    protected void givenTokenIsUnAuthorizedForUser() {
+        apiServer.expect().get().withPath("/oapi/v1/users/~").andReturn(401,"Unauthorized").once();
+    }
+    
+    private void expSubjectAcccessReviewToBe(boolean value, String user, String token) {
         testContext.put(USERNAME, user);
+        testContext.put(TOKEN, token);
         SubjectAccessReviewResponse response = new SubjectAccessReviewResponse(Boolean.FALSE, "v1", null, null, null, "");
         apiServer.expect().post().withPath("/oapi/v1/subjectaccessreviews").andReturn(200,response).once();
     }
@@ -327,31 +335,51 @@ public abstract class ElasticsearchIntegrationTest {
     }
     
     protected void whenGettingDocument(String uri) throws Exception{
-        testContext.put(URI, uri);
-        RequestRunner runner = new RequestRunnerBuilder().username((String)testContext.get(USERNAME)).build();
-        testContext.put(RESPONSE, runner.run(uri));
+        new RequestRunnerBuilder()
+            .username((String)testContext.get(USERNAME))
+            .token((String)testContext.get(TOKEN))
+            .build()
+            .run(uri);
+    }
+
+    /**
+     * This will append '_search' to the given arg 
+     */
+    protected void whenSearchingIndex(String query) throws Exception{
+        String uri = query + "/_search";
+        new RequestRunnerBuilder()
+            .username((String)testContext.get(USERNAME))
+            .token((String)testContext.get(TOKEN))
+            .build()
+            .run(uri);
     }
     
     protected void whenCheckingIndexExists(String uri) throws Exception{
-        RequestRunner runner = new RequestRunnerBuilder()
-                .username((String)testContext.get(USERNAME))
-                .method("head")
-                .build();
-        testContext.put(RESPONSE, runner.run(uri));
+        new RequestRunnerBuilder()
+            .username((String)testContext.get(USERNAME))
+            .token((String)testContext.get(TOKEN))
+            .method("head")
+            .build()
+            .run(uri);
     }
     
     protected void assertThatResponseIsSuccessful() {
-        String username = (String)testContext.get(USERNAME);
-        HttpResponse response = (HttpResponse)testContext.get(RESPONSE);
-        String uri = (String)testContext.get(URI);
-        assertEquals(String.format("Exp. %s request to succeed for %s", username, uri), 200, response.getStatusCode());
+        assertThatResponseIs("success", 200);
     }
 
     protected void assertThatResponseIsForbidden() {
+        assertThatResponseIs("forbidden", 403);
+    }
+    
+    protected void assertThatResponseIsUnauthorized() {
+        assertThatResponseIs("unauthorized", 401);
+    }
+    
+    private void assertThatResponseIs(String message, int expCode) {
         String username = (String)testContext.get(USERNAME);
         HttpResponse response = (HttpResponse)testContext.get(RESPONSE);
         String uri = (String)testContext.get(URI);
-        assertEquals(String.format("Exp. %s to be unauthorized for %s", username, uri), 403, response.getStatusCode());
+        assertEquals(String.format("Exp. %s for %s to %s", message, username, uri), expCode, response.getStatusCode());
     }
 
     protected Client client() {
@@ -668,23 +696,37 @@ public abstract class ElasticsearchIntegrationTest {
          *             the exception if there is an error
          */
         HttpResponse run(final String query) throws Exception {
+            testContext.put(URI, query);
             Collection<Header> headers = new ArrayList<>(this.headers.size());
-            headers.add(new BasicHeader("x-proxy-remote-user", this.username));
-            headers.add(new BasicHeader(RequestUtils.AUTHORIZATION_HEADER, "Bearer " + this.token));
+            addHeader(headers, "x-proxy-remote-user", this.username);
+            addHeader(headers, RequestUtils.AUTHORIZATION_HEADER, StringUtils.isNotEmpty(this.token) ? "Bearer " + this.token : this.token);
             for (Map.Entry<String, String> pair : this.headers.entrySet()) {
-                headers.add(new BasicHeader(pair.getKey(), pair.getValue()));
+                addHeader(headers, pair.getKey(), pair.getValue());
             }
+            HttpResponse response = null;
             switch (StringUtils.defaultIfBlank(method, "get").toLowerCase()) {
             case "head":
-                return executeHeadRequest(query, headers.toArray(new Header[headers.size()]));
+                response = executeHeadRequest(query, headers.toArray(new Header[headers.size()]));
+                break;
             case "put":
-                return executePutRequest(query, body, headers.toArray(new Header[headers.size()]));
+                response = executePutRequest(query, body, headers.toArray(new Header[headers.size()]));
+                break;
             case "delete":
-                return executeDeleteRequest(query, headers.toArray(new Header[headers.size()]));
+                response = executeDeleteRequest(query, headers.toArray(new Header[headers.size()]));
+                break;
             case "post":
-                return executePostRequest(query, body, headers.toArray(new Header[headers.size()]));
+                response = executePostRequest(query, body, headers.toArray(new Header[headers.size()]));
+                break;
             default:
-                return executeGetRequest(query, headers.toArray(new Header[headers.size()]));
+                response = executeGetRequest(query, headers.toArray(new Header[headers.size()]));
+            }
+            testContext.put(RESPONSE, response);
+            return response;
+        }
+        
+        void addHeader(Collection<Header> headers, String key, String value) {
+            if(StringUtils.isNotEmpty(key)) {
+                headers.add(new BasicHeader(key, value));
             }
         }
     }
