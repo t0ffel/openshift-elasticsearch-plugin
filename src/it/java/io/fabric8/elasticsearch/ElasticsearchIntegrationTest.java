@@ -322,7 +322,10 @@ public abstract class ElasticsearchIntegrationTest {
     private void expSubjectAcccessReviewToBe(boolean value, String user, String token) {
         testContext.put(USERNAME, user);
         testContext.put(TOKEN, token);
-        SubjectAccessReviewResponse response = new SubjectAccessReviewResponse(Boolean.FALSE, "v1", null, null, null, "");
+        if(StringUtils.isEmpty(token)) {
+            value = false;
+        }
+        SubjectAccessReviewResponse response = new SubjectAccessReviewResponse(value, "v1", null, null, null, "");
         apiServer.expect().post().withPath("/oapi/v1/subjectaccessreviews").andReturn(200,response).once();
     }
     

@@ -103,9 +103,6 @@ public class DynamicACLFilter extends RestFilter implements ConfigurationSetting
 
         try {
             if (enabled) {
-                if (utils.isClientCertAuth(request)) {
-                    return; //sgssl filter already determined this is an auth'd connection
-                }
                 final OpenshiftRequestContext requestContext = contextFactory.create(request, cache);
                 request = utils.modifyRequest(request, requestContext);
                 request.putInContext(OPENSHIFT_REQUEST_CONTEXT, requestContext);

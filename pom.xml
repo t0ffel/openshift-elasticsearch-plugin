@@ -75,7 +75,7 @@
 
         <elasticsearch.plugin.name>openshift-elasticsearch</elasticsearch.plugin.name>
         <elasticsearch.version>2.4.4</elasticsearch.version>
-        <kubernetes-client.version>2.6.3</kubernetes-client.version>
+        <kubernetes-client.version>3.0.0</kubernetes-client.version>
         <searchguard.version>2.4.4.10</searchguard.version>
         <searchguard-ssl.version>2.4.4.19</searchguard-ssl.version>
         <!-- used by vendor builds to use vendor version of searchguard plugins -->
@@ -92,7 +92,7 @@
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
-            <artifactId>openshift-client</artifactId>
+            <artifactId>kubernetes-openshift-uberjar</artifactId>
             <version>${kubernetes-client.version}</version>
             <exclusions>
                 <exclusion>

@@ -30,18 +30,18 @@ public class OperationsIntegrationTest extends ElasticsearchIntegrationTest {
     public void testNonOpsUserUsingOpsUsername() throws Exception {
         startES();
 
-        final String username = "admin";
+        final String username = "someadmin";
         final String token = "ADMINTOKEN";
 
         //ops user
-        givenUserIsClusterAdmin("admin", "ADMINTOKEN");
+        givenUserIsClusterAdmin(username, "ADMINTOKEN");
         givenTokenIsAuthorizedForUser(username);
         givenUserIsAdminForProjects("logging", "openshift");
         whenSearchingIndex(".operations.*");
         assertThatResponseIsSuccessful();
 
         //using admin name without providing token
-        givenUserIsNotClusterAdmin("admin", null);
+        givenUserIsClusterAdmin(username, null);
         givenTokenIsUnAuthorizedForUser();
         whenSearchingIndex(".operations.*");
         assertThatResponseIsUnauthorized();

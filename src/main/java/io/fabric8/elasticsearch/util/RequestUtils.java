@@ -19,7 +19,6 @@ package io.fabric8.elasticsearch.util;
 import java.util.Map;
 
 import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
 import org.elasticsearch.ElasticsearchSecurityException;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.inject.Inject;
@@ -65,11 +64,6 @@ public class RequestUtils implements ConfigurationSettings  {
         return "";
     }
     
-    public boolean isClientCertAuth(final RestRequest request) {
-        return (request != null) && request.hasInContext("_sg_ssl_principal")
-                && StringUtils.isNotEmpty(request.getFromContext("_sg_ssl_principal", ""));
-    }
-    
     public boolean isOperationsUser(RestRequest request) {
         final String user = getUser(request);
         final String token = getBearerToken(request);
@@ -78,7 +72,10 @@ public class RequestUtils implements ConfigurationSettings  {
         try (NamespacedOpenShiftClient osClient = new DefaultOpenShiftClient(builder.build())) {
             LOGGER.debug("Submitting a SAR to see if '{}' is able to retrieve logs across the cluster", user);
             SubjectAccessReviewResponse response = osClient.inAnyNamespace().subjectAccessReviews().createNew()
-                    .withVerb("get").withResource("pods/log").done();
+                    .withVerb("get")
+                    .withResource("pods/log")
+                    .withApiVersion("authorization.openshift.io/v1")
+                    .done();
             allowed = response.getAllowed();
         } catch (Exception e) {
             LOGGER.error("Exception determining user's '{}' role.", e, user);
