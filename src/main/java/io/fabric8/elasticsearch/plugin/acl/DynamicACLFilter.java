@@ -142,7 +142,6 @@ public class DynamicACLFilter implements ConfigurationSettings {
                             syncAcl(requestContext);
                         }
                     }
-    
                 }
             }
             threadPool.getThreadContext().putTransient(OPENSHIFT_REQUEST_CONTEXT, requestContext);

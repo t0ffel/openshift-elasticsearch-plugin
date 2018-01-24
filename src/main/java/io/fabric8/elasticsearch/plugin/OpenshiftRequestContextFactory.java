@@ -95,6 +95,11 @@ public class OpenshiftRequestContextFactory {
             }
             return new OpenshiftRequestContext(user, token, isClusterAdmin, projects, getKibanaIndex(user, isClusterAdmin), this.kibanaIndexMode);
         }
+        if(StringUtils.isNotBlank(user)) {
+            LOGGER.debug("Received a request with a user but no token. Setting userheader to empty.");
+            utils.setUser(request, "");
+        }
+        LOGGER.debug("Returing EMPTY request context; either was provided client cert or empty token.");
         return OpenshiftRequestContext.EMPTY; // nothing more we can do here
     }
 

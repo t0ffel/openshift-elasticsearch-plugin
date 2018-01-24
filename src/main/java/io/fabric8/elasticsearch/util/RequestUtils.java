@@ -168,6 +168,13 @@ public class RequestUtils implements ConfigurationSettings  {
         });
     }
 
+
+    /*public void setUser(RestRequest request, String user) {
+        LOGGER.debug("Modifying header '{}' to be '{}'", proxyUserHeader, user);
+        request
+            .putHeader(proxyUserHeader, user);
+    }
+*/
     /**
      * Modify the request of needed
      * @param request the original request
