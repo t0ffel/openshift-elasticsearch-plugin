@@ -33,6 +33,7 @@ import org.elasticsearch.action.support.ActionFilterChain;
 import org.elasticsearch.tasks.Task;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -105,7 +106,7 @@ public class FieldStatsResponseFilterTest {
         filter.apply(task, action, request, listener, chain );
         
         //then the original listener should be notified with the modified exception
-        verify(listener).onFailure(any(ElasticsearchException.class));
+        verify(listener).onFailure(Mockito.<ElasticsearchException>any());
     }
     
     @Test
